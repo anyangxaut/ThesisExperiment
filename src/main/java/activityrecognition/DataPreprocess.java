@@ -28,7 +28,7 @@ public class DataPreprocess {
         this.filePath = filePath;
     }
 
-    // 数据集中S1-ADL1，S1-ADL2，S1-ADL3，S1-Drill，S2-Drill用作训练数据，S1-ADL4，S1-ADL5用作测试数据
+    // 数据集中S1-ADL1，S1-ADL2，S1-ADL3，S1-Drill，S2-Drill用作训练数据，S1-ADL4，S1-ADL5, S3-Drill用作测试数据
     public void startPreprocess(){
         System.out.println("********************数据预处理开始**********************");
         preprocessing("S1-ADL1.dat");
@@ -38,6 +38,7 @@ public class DataPreprocess {
         preprocessing("S1-ADL5.dat");
         preprocessing("S1-Drill.dat");
         preprocessing("S2-Drill.dat");
+        preprocessing("S3-Drill.dat");
         System.out.println("********************数据预处理结束**********************");
     }
 
@@ -90,12 +91,10 @@ public class DataPreprocess {
                     saveDataAsDatabase(dataList);
 
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
 
             } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         } else{
@@ -155,7 +154,6 @@ public class DataPreprocess {
 //			return true;
 //
 //		} catch (IOException e) {
-//			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
 //		return false;

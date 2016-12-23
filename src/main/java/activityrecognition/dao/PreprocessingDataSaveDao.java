@@ -5,7 +5,5 @@ package activityrecognition.dao;
  *
  */
 public interface PreprocessingDataSaveDao {
-
-	// 将预处理后的数据保存至mysql数据库中
 	public boolean save(String[] sql);
 }

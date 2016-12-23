@@ -1,0 +1,53 @@
+package activityrecognition.daoImpl;
+
+import activityrecognition.dao.SplitLocomotionDao;
+import activityrecognition.entity.DataEntity;
+import activityrecognition.util.DBOperation;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by anyang on 2016/12/23.
+ */
+public class SplitLocomotionImpl implements SplitLocomotionDao{
+
+    public List<DataEntity> search(String sql) {
+        // 创建返回值对象
+        List<DataEntity> result = new ArrayList<DataEntity>();
+        // 创建数据库操作类对象--增删查改
+        DBOperation dboperation = new DBOperation ();
+        // 调用DBOperation对象的findsql方法执行sql语句---查
+        ResultSet rs = dboperation.findsql(sql);
+
+        try {
+            // 循环读取查询到的数据记录
+            while (rs != null && rs.next() == true){
+                DataEntity dataEntity = new DataEntity(rs.getString(2), rs.getString(3), rs.getString(4),
+                        rs.getString(5), rs.getString(6), rs.getString(7), rs.getString(8), rs.getString(9),
+                        rs.getString(10), rs.getString(11), rs.getString(12));
+                result.add(dataEntity);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally{
+            // 关闭数据库连接
+            dboperation.closeConn();
+        }
+        // 返回查询到的数据信息
+        return result;
+    }
+
+    public boolean save(String[] sql) {
+        // 创建数据库操作类对象--增删查改
+        DBOperation dboperation = new DBOperation ();
+        // 调用DBOperation对象的excutesql方法执行sql语句---增删改
+        boolean rs = dboperation.excutesql(sql);
+        // 关闭数据库连接
+        dboperation.closeConn();
+        // sql语句是否执行成功
+        return rs;
+    }
+}
