@@ -4,11 +4,13 @@ import activityrecognition.dao.SplitLocomotionDao;
 import activityrecognition.daoImpl.SplitLocomotionImpl;
 import activityrecognition.entity.DataEntity;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * // 窗口划分，特征提取(采样频率64hz，窗口大小0.5s，1s，1.5s，2s，重叠率50%，均值，方差，平均绝对误差，均方根，四分位差，
- * 相关系数，极差，峰度，偏度，协方差，能量，熵，能谱密度，相关系数)
+ * // 窗口划分，特征提取(采样频率64hz，窗口大小0.5s，1s，2s，重叠率50%，均值，方差，平均绝对误差，均方根，四分位差，
+ * 极差，峰度，偏度，协方差，能量，相关系数)
  *
  * @author Administrator
  */
@@ -27,11 +29,11 @@ public class FeatureExtraction {
     public void startFeatureExtraction() {
         System.out.println("********************特征提取开始**********************");
         // 对"stand"动作进行特征提取
-        featureExtraction(1, "stand", 109095);
+        featureExtraction(1, "stand", 155765);
         // 对"walk"动作进行特征提取
-        featureExtraction(2, "walk", 65996);
+        featureExtraction(2, "walk", 80474);
         // 对"sit"动作进行特征提取
-        featureExtraction(4, "sit", 43586);
+        featureExtraction(4, "sit", 48869);
         // 对"lie"动作进行特征提取
         featureExtraction(5, "lie", 5572);
         System.out.println("********************特征提取结束**********************");
@@ -64,60 +66,96 @@ public class FeatureExtraction {
             double[] meanValue = means(list);
             // 计算方差-9
             double[] varianceValue = variance(list, meanValue);
-            // 计算相关系数-81
-            double[] correlationValue = correlation(list, meanValue, varianceValue);
+            // 计算平均绝对误差
+            double[] madValue = mad(list, meanValue);
+            // 计算均方根-9
+           double[] rmsValue = rms(list);
+            // 计算四分位差-9
+            double[] iqrValue = iqr(list);
+            // 计算极差-9
+            double[] rangeValue = range(list);
+            // 计算峰度-9
+            double[] kurtosisValue = kurtosis(list, meanValue, varianceValue);
+            // 计算偏度-9
+            double[] skewnessValue = skewness(list, meanValue, varianceValue);
+            // 计算协方差-9
+            double[] covarianceValue = covariance(list, meanValue);
+            // 计算相关系数-9
+            double[] correlationValue = correlation(covarianceValue, varianceValue);
             // 计算能量-9
             double[] energyValue = energy(list);
 
-            sqlAdd[index++] = "INSERT INTO `featureextraction` (`RKN_accX_mean`, `RKN_accY_mean`, `RKN_accZ_mean`, `HIP_accX_mean`, `HIP_accY_mean`, " +
-                    "`HIP_accZ_mean`, `LUA_accX_mean`, `LUA_accY_mean`, `LUA_accZ_mean`, `RKN_accX_variance`, `RKN_accY_variance`, " +
-                    "`RKN_accZ_variance`, `HIP_accX_variance`, `HIP_accY_variance`, `HIP_accZ_variance`, `LUA_accX_variance`, `LUA_accY_variance`," +
-                    "`LUA_accZ_variance`, `RKN_accX_RKN_accY_correlation`, `RKN_accX_RKN_accZ_correlation`," +
-                    "`RKN_accX_HIP_accX_correlation`, `RKN_accX_HIP_accY_correlation`, `RKN_accX_HIP_accZ_correlation`, " +
-                    "`RKN_accX_LUA_accX_correlation`, `RKN_accX_LUA_accY_correlation`, `RKN_accX_LUA_accZ_correlation`, " +
-                    "`RKN_accY_RKN_accX_correlation`,  `RKN_accY_RKN_accZ_correlation`, " +
-                    "`RKN_accY_HIP_accX_correlation`, `RKN_accY_HIP_accY_correlation`, `RKN_accY_HIP_accZ_correlation`, " +
-                    "`RKN_accY_LUA_accX_correlation`, `RKN_accY_LUA_accY_correlation`, `RKN_accY_LUA_accZ_correlation`, " +
-                    "`RKN_accZ_RKN_accX_correlation`, `RKN_accZ_RKN_accY_correlation`, " +
-                    "`RKN_accZ_HIP_accX_correlation`, `RKN_accZ_HIP_accY_correlation`, `RKN_accZ_HIP_accZ_correlation`, " +
-                    "`RKN_accZ_LUA_accX_correlation`, `RKN_accZ_LUA_accY_correlation`, `RKN_accZ_LUA_accZ_correlation`, " +
-                    "`HIP_accX_RKN_accX_correlation`, `HIP_accX_RKN_accY_correlation`, `HIP_accX_RKN_accZ_correlation`, " +
-                    " `HIP_accX_HIP_accY_correlation`, `HIP_accX_HIP_accZ_correlation`, " +
-                    "`HIP_accX_LUA_accX_correlation`, `HIP_accX_LUA_accY_correlation`, `HIP_accX_LUA_accZ_correlation`, " +
-                    "`HIP_accY_RKN_accX_correlation`, `HIP_accY_RKN_accY_correlation`, `HIP_accY_RKN_accZ_correlation`, " +
-                    "`HIP_accY_HIP_accX_correlation`,  `HIP_accY_HIP_accZ_correlation`, " +
-                    "`HIP_accY_LUA_accX_correlation`, `HIP_accY_LUA_accY_correlation`, `HIP_accY_LUA_accZ_correlation`, " +
-                    "`HIP_accZ_RKN_accX_correlation`, `HIP_accZ_RKN_accY_correlation`, `HIP_accZ_RKN_accZ_correlation`, " +
-                    "`HIP_accZ_HIP_accX_correlation`, `HIP_accZ_HIP_accY_correlation`, " +
-                    "`HIP_accZ_LUA_accX_correlation`, `HIP_accZ_LUA_accY_correlation`, `HIP_accZ_LUA_accZ_correlation`, " +
-                    "`LUA_accX_RKN_accX_correlation`, `LUA_accX_RKN_accY_correlation`, `LUA_accX_RKN_accZ_correlation`, " +
-                    "`LUA_accX_HIP_accX_correlation`, `LUA_accX_HIP_accY_correlation`, `LUA_accX_HIP_accZ_correlation`, " +
-                    "`LUA_accX_LUA_accY_correlation`, `LUA_accX_LUA_accZ_correlation`, " +
-                    "`LUA_accY_RKN_accX_correlation`, `LUA_accY_RKN_accY_correlation`, `LUA_accY_RKN_accZ_correlation`, " +
-                    "`LUA_accY_HIP_accX_correlation`, `LUA_accY_HIP_accY_correlation`, `LUA_accY_HIP_accZ_correlation`, " +
-                    "`LUA_accY_LUA_accX_correlation`, `LUA_accY_LUA_accZ_correlation`, " +
-                    "`LUA_accZ_RKN_accX_correlation`, `LUA_accZ_RKN_accY_correlation`, `LUA_accZ_RKN_accZ_correlation`, " +
-                    "`LUA_accZ_HIP_accX_correlation`, `LUA_accZ_HIP_accY_correlation`, `LUA_accZ_HIP_accZ_correlation`, " +
-                    "`LUA_accZ_LUA_accX_correlation`, `LUA_accZ_LUA_accY_correlation`, " +
-                    "`RKN_accX_energy`, `RKN_accY_energy`, `RKN_accZ_energy`, `HIP_accX_energy`, `HIP_accY_energy`, " +
-                    "`HIP_accZ_energy`, `LUA_accX_energy`, `LUA_accY_energy`, `LUA_accZ_energy`, `locomotion`) VALUES" +
-                    "('" + meanValue[0] + "', '" + meanValue[1] + "', '" + meanValue[2] + "', '" + meanValue[3] + "', '" + meanValue[4] + "', '" + meanValue[5] + "', '" + meanValue[6] + "', '" + meanValue[7] + "', '" + meanValue[8] + "', '" + varianceValue[0] + "', '" + varianceValue[1] + "', '" + varianceValue[2] + "', '" + varianceValue[3] + "', '" + varianceValue[4] + "', '" + varianceValue[5] + "', '" + varianceValue[6] + "', '" + varianceValue[7] + "', '" + varianceValue[8] + "', '" +
-                    correlationValue[1] + "', '" + correlationValue[2] + "', '" + correlationValue[3] + "', '" + correlationValue[4] + "', '" + correlationValue[5] + "', '" + correlationValue[6] + "', '" + correlationValue[7] + "', '" + correlationValue[8] + "', '" +
-                    correlationValue[9] + "', '" + correlationValue[11] + "', '" + correlationValue[12] + "', '" + correlationValue[13] + "', '" + correlationValue[14] + "', '" + correlationValue[15] + "', '" + correlationValue[16] + "', '" + correlationValue[17] + "', '" +
-                    correlationValue[18] + "', '" + correlationValue[19] + "', '" + correlationValue[21] + "', " + "'" + correlationValue[22] + "', '" + correlationValue[23] + "', '" + correlationValue[24] + "', '" + correlationValue[25] + "', '" + correlationValue[26] + "', '" +
-                    correlationValue[27] + "', '" + correlationValue[28] + "', '" + correlationValue[29] + "', '" + correlationValue[31] + "', '" + correlationValue[32] + "', '" + correlationValue[33] + "', '" + correlationValue[34] + "', '" + correlationValue[35] + "', '" +
-                    correlationValue[36] + "', '" + correlationValue[37] + "', '" + correlationValue[38] + "', '" + correlationValue[39] + "', '" + correlationValue[41] + "', '" + correlationValue[42] + "'," + " '" + correlationValue[43] + "', '" + correlationValue[44] + "', '" +
-                    correlationValue[45] + "', '" + correlationValue[46] + "', '" + correlationValue[47] + "', '" + correlationValue[48] + "', '" + correlationValue[49] + "', '" + correlationValue[51] + "', '" + correlationValue[52] + "', '" + correlationValue[53] + "', '" +
-                    correlationValue[54] + "', '" + correlationValue[55] + "', '" + correlationValue[56] + "', '" + correlationValue[57] + "', '" + correlationValue[58] + "', '" + correlationValue[59] + "', '" + correlationValue[61] + "', '" + correlationValue[62] + "', '" +
-                    correlationValue[63] + "'," + " '" + correlationValue[64] + "', '" + correlationValue[65] + "', '" + correlationValue[66] + "', '" + correlationValue[67] + "', '" + correlationValue[68] + "', '" + correlationValue[69] + "', '" + correlationValue[71] + "', '" +
-                    correlationValue[72] + "', '" + correlationValue[73] + "', '" + correlationValue[74] + "', '" + correlationValue[75] + "', '" + correlationValue[76] + "', '" + correlationValue[77] + "', '" + correlationValue[78] + "', '" + correlationValue[79] + "', '" + energyValue[0] + "', '" + energyValue[1] + "', '" + energyValue[2] + "', '" + energyValue[3] + "'," + " '" + energyValue[4] + "', '" + energyValue[5] + "', '" + energyValue[6] + "', '" + energyValue[7] + "', '" + energyValue[8] + "', '" + Locomotion + "');";
+            sqlAdd[index++] = "INSERT INTO `featureextraction32` (" +
+                    "`RKN_accX_mean`, `RKN_accY_mean`, `RKN_accZ_mean`," +
+                    " `HIP_accX_mean`, `HIP_accY_mean`, `HIP_accZ_mean`, " +
+                    "`LUA_accX_mean`, `LUA_accY_mean`, `LUA_accZ_mean`, " +
+                    "`RKN_accX_variance`, `RKN_accY_variance`, `RKN_accZ_variance`, " +
+                    "`HIP_accX_variance`, `HIP_accY_variance`, `HIP_accZ_variance`, " +
+                    "`LUA_accX_variance`, `LUA_accY_variance`, `LUA_accZ_variance`, " +
+                    "`RKN_accX_mad`, `RKN_accY_mad`, `RKN_accZ_mad`, " +
+                    "`HIP_accX_mad`, `HIP_accY_mad`, `HIP_accZ_mad`, " +
+                    "`LUA_accX_mad`, `LUA_accY_mad`, `LUA_accZ_mad`" +
+                    ", `RKN_accX_rms`, `RKN_accY_rms`, `RKN_accZ_rms`, " +
+                    "`HIP_accX_rms`, `HIP_accY_rms`, `HIP_accZ_rms`, " +
+                    "`LUA_accX_rms`, `LUA_accY_rms`, `LUA_accZ_rms`, " +
+                    "`RKN_accX_iqr`, `RKN_accY_iqr`, `RKN_accZ_iqr`, " +
+                    "`HIP_accX_iqr`, `HIP_accY_iqr`, `HIP_accZ_iqr`, " +
+                    "`LUA_accX_iqr`, `LUA_accY_iqr`, `LUA_accZ_iqr`, " +
+                    "`RKN_accX_range`, `RKN_accY_range`, `RKN_accZ_range`, " +
+                    "`HIP_accX_range`, `HIP_accY_range`, `HIP_accZ_range`, " +
+                    "`LUA_accX_range`, `LUA_accY_range`, `LUA_accZ_range`, " +
+                    "`RKN_accX_kurtosis`, `RKN_accY_kurtosis`, `RKN_accZ_kurtosis`, " +
+                    "`HIP_accX_kurtosis`, `HIP_accY_kurtosis`, `HIP_accZ_kurtosis`, " +
+                    "`LUA_accX_kurtosis`, `LUA_accY_kurtosis`, `LUA_accZ_kurtosis`, " +
+                    "`RKN_accX_skewness`, `RKN_accY_skewness`, `RKN_accZ_skewness`, " +
+                    "`HIP_accX_skewness`, `HIP_accY_skewness`, `HIP_accZ_skewness`, " +
+                    "`LUA_accX_skewness`, `LUA_accY_skewness`, `LUA_accZ_skewness`, " +
+                    "`RKN_accX_covariance`, `RKN_accY_covariance`, `RKN_accZ_covariance`, " +
+                    "`HIP_accX_covariance`, `HIP_accY_covariance`, `HIP_accZ_covariance`, " +
+                    "`LUA_accX_covariance`, `LUA_accY_covariance`, `LUA_accZ_covariance`, " +
+                    "`RKN_accX_accY_correlation`, `RKN_accY_accZ_correlation`, `RKN_accZ_accX_correlation`, " +
+                    "`HIP_accX_accY_correlation`, `HIP_accY_accZ_correlation`, `HIP_accZ_accX_correlation`, " +
+                    "`LUA_accX_accY_correlation`, `LUA_accY_accZ_correlation`, `LUA_accZ_accX_correlation`, " +
+                    "`RKN_accX_energy`, `RKN_accY_energy`, `RKN_accZ_energy`, " +
+                    "`HIP_accX_energy`, `HIP_accY_energy`, `HIP_accZ_energy`, " +
+                    "`LUA_accX_energy`, `LUA_accY_energy`, `LUA_accZ_energy`, `locomotion`) " +
+                    "VALUES('" + meanValue[0] + "', '" + meanValue[1] + "', '" + meanValue[2] + "', '" + meanValue[3] +
+                    "', '" + meanValue[4] + "', '" + meanValue[5] + "', '" + meanValue[6] + "', '" + meanValue[7] +
+                    "', '" + meanValue[8] + "', '" + varianceValue[0] + "', '" + varianceValue[1] + "', '" +
+                    varianceValue[2] + "', '" + varianceValue[3] + "', '" + varianceValue[4] + "', '" +
+                    varianceValue[5] + "', '" + varianceValue[6] + "', '" + varianceValue[7] + "', '" +
+                    varianceValue[8] + "', '" + madValue[0] + "', '" + madValue[1] + "', '" + madValue[2] + "', " +
+                    "'" + madValue[3] + "', '" + madValue[4] + "', '" + madValue[5] + "', '" + madValue[6] + "', " +
+                    "'" + madValue[7] + "', '" + madValue[8] + "', '" + rmsValue[0] + "', '" + rmsValue[1] + "', " +
+                    "'" + rmsValue[2] + "', '" + rmsValue[3] + "', '" + rmsValue[4] + "', " +
+                    "'" + rmsValue[5] + "', '" + rmsValue[6] + "', '" + rmsValue[7] + "', '" + rmsValue[8] + "', " +
+                    "'" + iqrValue[0] + "', '" + iqrValue[1] + "', '" + iqrValue[2] + "', '" + iqrValue[3] +
+                    "', '" + iqrValue[4] + "', '" + iqrValue[5] + "', '" + iqrValue[6] + "', '" + iqrValue[7] +
+                    "', '" + iqrValue[8] + "', '" + rangeValue[0] + "', '" + rangeValue[1] + "', '" + rangeValue[2] +
+                    "', '" + rangeValue[3] + "', '" + rangeValue[4] + "', '" + rangeValue[5] + "', '" + rangeValue[6]
+                    + "', '" + rangeValue[7] + "', '" + rangeValue[8] + "', '" + kurtosisValue[0] + "', " +
+                    "'" + kurtosisValue[1] + "', '" + kurtosisValue[2] + "', '" + kurtosisValue[3] +
+                    "', '" + kurtosisValue[4] + "', '" + kurtosisValue[5] + "', '" + kurtosisValue[6] + "', " +
+                    "'" + kurtosisValue[7] + "', '" + kurtosisValue[8] + "', '" + skewnessValue[0] + "', " +
+                    "'" + skewnessValue[1] + "', '" + skewnessValue[2] + "', '" + skewnessValue[3] + "', " +
+                    "'" + skewnessValue[4] + "', '" + skewnessValue[5] + "', '" + skewnessValue[6] + "', " +
+                    "'" + skewnessValue[7] + "', '" + skewnessValue[8] + "', '" + covarianceValue[0] + "', " +
+                    "'" + covarianceValue[1] + "', '" + covarianceValue[2] + "', '" + covarianceValue[3] + "', " +
+                    "'" + covarianceValue[4] + "', '" + covarianceValue[5] + "', '" + covarianceValue[6] + "', " +
+                    "'" + covarianceValue[7] + "', '" + covarianceValue[8] + "', '" + correlationValue[0] + "', " +
+                    "'" + correlationValue[1] + "', '" + correlationValue[2] + "', '" + correlationValue[3] + "', " +
+                    "'" + correlationValue[4] + "', '" + correlationValue[5] + "', '" + correlationValue[6] +
+                    "', '" + correlationValue[7] + "', '" + correlationValue[8] + "', '" + energyValue[0] + "', '" +
+                    energyValue[1] + "', '" + energyValue[2] + "', '" + energyValue[3] + "'," + " '" +
+                    energyValue[4] + "', '" + energyValue[5] + "', '" + energyValue[6] + "', '" + energyValue[7] +
+                    "', '" + energyValue[8] + "', '" + Locomotion + "');";
         }
         // 执行插入语句
         dao.save(sqlAdd);
         System.out.println("动作" + tableName + "特征提取完毕！");
     }
 
-    // 计算均值
+    // 计算均值-9
     public double[] means(List<DataEntity> list) {
         // 各轴加速度数据之和
         double sum_RKN_accX = 0;
@@ -161,7 +199,7 @@ public class FeatureExtraction {
         return means;
     }
 
-    // 计算方差
+    // 计算方差-9
     public double[] variance(List<DataEntity> list, double[] meanValue) {
         // 各轴加速度数据与均值之差的平方求和
         double square_RKN_accX = 0;
@@ -213,38 +251,379 @@ public class FeatureExtraction {
         return variance;
     }
 
-	// 计算相关系数
-	public double[] correlation(List<DataEntity> list, double[] meanValue, double[] varianceValue){
-		// 计算协方差*n
-		double[][] correlation_difference = new double[9][9];
-		// 计算相关系数
-		double[] correlation = new double[81];
-//		// 下标：0-80
-//		int index = 0;
-//
-//		// 控制外层循环--9个轴的加速度数据
-//		for(int m = 1; m < 10; m++){
-//			// 控制内层循环--9个轴的加速度数据
-//			for(int n = 1; n < 10; n++){
-//				// 循环读取查询到的数据记录
-//				for(int i = 0; i < list.size(); i++){
-//					DataEntity dataEntity = list.get(i);
-//					correlation_difference[m-1][n-1] += (Double.parseDouble(data.get(m))- meanValue[m-1])
-//							* (Double.parseDouble(data.get(n))- meanValue[n-1]);
-//				}
-//			}
-//		}
-//
-//		// 计算协方差及其相关系数
-//		for(int m = 0; m < 9; m++){
-//			for(int n = 0; n < 9; n++){
-//				correlation[index] = (correlation_difference[m][n] / windowSize) / (Math.sqrt(varianceValue[m]*varianceValue[n]));
-//				index++;
-//			}
-//		}
-//
-		return correlation;
-	}
+    // 计算平均绝对误差-9
+    public double[] mad(List<DataEntity> list, double[] meanValue) {
+        // 各轴加速度数据与均值之差的绝对值求和
+        double mad_RKN_accX = 0;
+        double mad_RKN_accY = 0;
+        double mad_RKN_accZ = 0;
+        double mad_HIP_accX = 0;
+        double mad_HIP_accY = 0;
+        double mad_HIP_accZ = 0;
+        double mad_LUA_accX = 0;
+        double mad_LUA_accY = 0;
+        double mad_LUA_accZ = 0;
+        // 各轴加速度数据平均绝对误差
+        double[] mad = new double[9];
+        for (int i = 0; i < list.size(); i++) {
+            DataEntity dataEntity = list.get(i);
+            // 计算各轴加速度数据与均值之差的平方求和
+            double tmp = Double.parseDouble(dataEntity.getRkn_x()) - meanValue[0];
+            mad_RKN_accX = mad_RKN_accX + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getRkn_y()) - meanValue[1];
+            mad_RKN_accY = mad_RKN_accY + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getRkn_z()) - meanValue[2];
+            mad_RKN_accZ = mad_RKN_accZ + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getHip_x()) - meanValue[3];
+            mad_HIP_accX = mad_HIP_accX + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getHip_y()) - meanValue[4];
+            mad_HIP_accY = mad_HIP_accY + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getHip_z()) - meanValue[5];
+            mad_HIP_accZ = mad_HIP_accZ + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getLua_x()) - meanValue[6];
+            mad_LUA_accX = mad_LUA_accX + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getLua_y()) - meanValue[7];
+            mad_LUA_accY = mad_LUA_accY + Math.abs(tmp);
+            tmp = Double.parseDouble(dataEntity.getLua_z()) - meanValue[8];
+            mad_LUA_accZ = mad_LUA_accZ + Math.abs(tmp);
+        }
+        // 计算各轴加速度数据平均绝对误差
+        mad[0] = mad_RKN_accX / windowSize;
+        mad[1] = mad_RKN_accY / windowSize;
+        mad[2] = mad_RKN_accZ / windowSize;
+        mad[3] = mad_HIP_accX / windowSize;
+        mad[4] = mad_HIP_accY / windowSize;
+        mad[5] = mad_HIP_accZ / windowSize;
+        mad[6] = mad_LUA_accX / windowSize;
+        mad[7] = mad_LUA_accY / windowSize;
+        mad[8] = mad_LUA_accZ / windowSize;
+
+        return mad;
+    }
+
+    // 计算均方根-9
+    public double[] rms(List<DataEntity> list) {
+        double rms_RKN_accX = 0;
+        double rms_RKN_accY = 0;
+        double rms_RKN_accZ = 0;
+        double rms_HIP_accX = 0;
+        double rms_HIP_accY = 0;
+        double rms_HIP_accZ = 0;
+        double rms_LUA_accX = 0;
+        double rms_LUA_accY = 0;
+        double rms_LUA_accZ = 0;
+        double[] rms = new double[9];
+        for (int i = 0; i < list.size(); i++) {
+            DataEntity dataEntity = list.get(i);
+            double tmp = Math.pow(Double.parseDouble(dataEntity.getRkn_x()), 2);
+            rms_RKN_accX = rms_RKN_accX + tmp;
+            tmp =  Math.pow(Double.parseDouble(dataEntity.getRkn_y()), 2);
+            rms_RKN_accY = rms_RKN_accY + tmp;
+            tmp = Math.pow(Double.parseDouble(dataEntity.getRkn_z()), 2);
+            rms_RKN_accZ = rms_RKN_accZ + tmp;
+            tmp = Math.pow(Double.parseDouble(dataEntity.getHip_x()), 2);
+            rms_HIP_accX = rms_HIP_accX + tmp;
+            tmp = Math.pow(Double.parseDouble(dataEntity.getHip_y()), 2);
+            rms_HIP_accY = rms_HIP_accY + tmp;
+            tmp = Math.pow(Double.parseDouble(dataEntity.getHip_z()), 2);
+            rms_HIP_accZ = rms_HIP_accZ + tmp;
+            tmp = Math.pow(Double.parseDouble(dataEntity.getLua_x()), 2);
+            rms_LUA_accX = rms_LUA_accX + tmp;
+            tmp = Math.pow(Double.parseDouble(dataEntity.getLua_y()), 2);
+            rms_LUA_accY = rms_LUA_accY + tmp;
+            tmp = Math.pow(Double.parseDouble(dataEntity.getLua_z()), 2);
+            rms_LUA_accZ = rms_LUA_accZ + tmp;
+        }
+        // 计算各轴加速度数据均方根
+        rms[0] = Math.sqrt(rms_RKN_accX / windowSize);
+        rms[1] = Math.sqrt(rms_RKN_accY / windowSize);
+        rms[2] = Math.sqrt(rms_RKN_accZ / windowSize);
+        rms[3] = Math.sqrt(rms_HIP_accX / windowSize);
+        rms[4] = Math.sqrt(rms_HIP_accY / windowSize);
+        rms[5] = Math.sqrt(rms_HIP_accZ / windowSize);
+        rms[6] = Math.sqrt(rms_LUA_accX / windowSize);
+        rms[7] = Math.sqrt(rms_LUA_accY / windowSize);
+        rms[8] = Math.sqrt(rms_LUA_accZ / windowSize);
+
+        return rms;
+    }
+
+    // 计算四分位差-9
+    public double[] iqr(List<DataEntity> list) {
+        double[] array_RKN_accX = new double[list.size()];
+        double[] array_RKN_accY = new double[list.size()];
+        double[] array_RKN_accZ = new double[list.size()];
+        double[] array_HIP_accX = new double[list.size()];
+        double[] array_HIP_accY = new double[list.size()];
+        double[] array_HIP_accZ = new double[list.size()];
+        double[] array_LUA_accX = new double[list.size()];
+        double[] array_LUA_accY = new double[list.size()];
+        double[] array_LUA_accZ = new double[list.size()];
+        double[] iqr = new double[9];
+        for (int i = 0; i < list.size(); i++) {
+            DataEntity dataEntity = list.get(i);
+            double tmp = Double.parseDouble(dataEntity.getRkn_x());
+            array_RKN_accX[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getRkn_y());
+            array_RKN_accY[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getRkn_z());
+            array_RKN_accZ[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getHip_x());
+            array_HIP_accX[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getHip_y());
+            array_HIP_accY[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getHip_z());
+            array_HIP_accZ[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getLua_x());
+            array_LUA_accX[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getLua_y());
+            array_LUA_accY[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getLua_z());
+            array_LUA_accZ[i] = tmp;
+        }
+        Arrays.sort(array_RKN_accX);
+        Arrays.sort(array_RKN_accY);
+        Arrays.sort(array_RKN_accZ);
+        Arrays.sort(array_HIP_accX);
+        Arrays.sort(array_HIP_accY);
+        Arrays.sort(array_HIP_accZ);
+        Arrays.sort(array_LUA_accX);
+        Arrays.sort(array_LUA_accY);
+        Arrays.sort(array_LUA_accZ);
+
+        iqr[0] = (array_RKN_accX[3 * (list.size() + 1) / 4] - array_RKN_accX[(list.size() + 1) / 4]) / 2;
+        iqr[1] = (array_RKN_accY[3 * (list.size() + 1) / 4] - array_RKN_accY[(list.size() + 1) / 4]) / 2;
+        iqr[2] = (array_RKN_accZ[3 * (list.size() + 1) / 4] - array_RKN_accZ[(list.size() + 1) / 4]) / 2;
+        iqr[3] = (array_HIP_accX[3 * (list.size() + 1) / 4] - array_HIP_accX[(list.size() + 1) / 4]) / 2;
+        iqr[4] = (array_HIP_accY[3 * (list.size() + 1) / 4] - array_HIP_accY[(list.size() + 1) / 4]) / 2;
+        iqr[5] = (array_HIP_accZ[3 * (list.size() + 1) / 4] - array_HIP_accZ[(list.size() + 1) / 4]) / 2;
+        iqr[6] = (array_LUA_accX[3 * (list.size() + 1) / 4] - array_LUA_accX[(list.size() + 1) / 4]) / 2;
+        iqr[7] = (array_LUA_accY[3 * (list.size() + 1) / 4] - array_LUA_accY[(list.size() + 1) / 4]) / 2;
+        iqr[8] = (array_LUA_accZ[3 * (list.size() + 1) / 4] - array_LUA_accZ[(list.size() + 1) / 4]) / 2;
+
+        return iqr;
+    }
+
+    // 计算极差-9
+    public double[] range(List<DataEntity> list) {
+        double[] array_RKN_accX = new double[list.size()];
+        double[] array_RKN_accY = new double[list.size()];
+        double[] array_RKN_accZ = new double[list.size()];
+        double[] array_HIP_accX = new double[list.size()];
+        double[] array_HIP_accY = new double[list.size()];
+        double[] array_HIP_accZ = new double[list.size()];
+        double[] array_LUA_accX = new double[list.size()];
+        double[] array_LUA_accY = new double[list.size()];
+        double[] array_LUA_accZ = new double[list.size()];
+        double[] range = new double[9];
+        for (int i = 0; i < list.size(); i++) {
+            DataEntity dataEntity = list.get(i);
+            double tmp = Double.parseDouble(dataEntity.getRkn_x());
+            array_RKN_accX[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getRkn_y());
+            array_RKN_accY[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getRkn_z());
+            array_RKN_accZ[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getHip_x());
+            array_HIP_accX[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getHip_y());
+            array_HIP_accY[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getHip_z());
+            array_HIP_accZ[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getLua_x());
+            array_LUA_accX[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getLua_y());
+            array_LUA_accY[i] = tmp;
+            tmp = Double.parseDouble(dataEntity.getLua_z());
+            array_LUA_accZ[i] = tmp;
+        }
+        Arrays.sort(array_RKN_accX);
+        Arrays.sort(array_RKN_accY);
+        Arrays.sort(array_RKN_accZ);
+        Arrays.sort(array_HIP_accX);
+        Arrays.sort(array_HIP_accY);
+        Arrays.sort(array_HIP_accZ);
+        Arrays.sort(array_LUA_accX);
+        Arrays.sort(array_LUA_accY);
+        Arrays.sort(array_LUA_accZ);
+
+        range[0] = array_RKN_accX[list.size() - 1] - array_RKN_accX[0];
+        range[1] = array_RKN_accY[list.size() - 1] - array_RKN_accY[0];
+        range[2] = array_RKN_accZ[list.size() - 1] - array_RKN_accZ[0];
+        range[3] = array_HIP_accX[list.size() - 1] - array_HIP_accX[0];
+        range[4] = array_HIP_accY[list.size() - 1] - array_HIP_accY[0];
+        range[5] = array_HIP_accZ[list.size() - 1] - array_HIP_accZ[0];
+        range[6] = array_LUA_accX[list.size() - 1] - array_LUA_accX[0];
+        range[7] = array_LUA_accY[list.size() - 1] - array_LUA_accY[0];
+        range[8] = array_LUA_accZ[list.size() - 1] - array_LUA_accZ[0];
+
+        return range;
+    }
+
+    // 计算峰度-9
+    public double[] kurtosis(List<DataEntity> list, double[] meanValue, double[] variance) {
+        double kurtosis_RKN_accX = 0;
+        double kurtosis_RKN_accY = 0;
+        double kurtosis_RKN_accZ = 0;
+        double kurtosis_HIP_accX = 0;
+        double kurtosis_HIP_accY = 0;
+        double kurtosis_HIP_accZ = 0;
+        double kurtosis_LUA_accX = 0;
+        double kurtosis_LUA_accY = 0;
+        double kurtosis_LUA_accZ = 0;
+        double[] kurtosis = new double[9];
+        for (int i = 0; i < list.size(); i++) {
+            DataEntity dataEntity = list.get(i);
+            double tmp = (Double.parseDouble(dataEntity.getRkn_x()) - meanValue[0]) / Math.sqrt(variance[0]);
+            kurtosis_RKN_accX = kurtosis_RKN_accX + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getRkn_y()) - meanValue[1]) / Math.sqrt(variance[1]);
+            kurtosis_RKN_accY = kurtosis_RKN_accY + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getRkn_z()) - meanValue[2]) / Math.sqrt(variance[2]);
+            kurtosis_RKN_accZ = kurtosis_RKN_accZ + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getHip_x()) - meanValue[3]) / Math.sqrt(variance[3]);
+            kurtosis_HIP_accX = kurtosis_HIP_accX + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getHip_y()) - meanValue[4]) / Math.sqrt(variance[4]);
+            kurtosis_HIP_accY = kurtosis_HIP_accY + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getHip_z()) - meanValue[5]) / Math.sqrt(variance[5]);
+            kurtosis_HIP_accZ = kurtosis_HIP_accZ + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getLua_x()) - meanValue[6]) / Math.sqrt(variance[6]);
+            kurtosis_LUA_accX = kurtosis_LUA_accX + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getLua_y()) - meanValue[7]) / Math.sqrt(variance[7]);
+            kurtosis_LUA_accY = kurtosis_LUA_accY + Math.pow(tmp, 4);
+            tmp = (Double.parseDouble(dataEntity.getLua_z()) - meanValue[8]) / Math.sqrt(variance[8]);
+            kurtosis_LUA_accZ = kurtosis_LUA_accZ + Math.pow(tmp, 4);
+        }
+        kurtosis[0] = kurtosis_RKN_accX / windowSize;
+        kurtosis[1] = kurtosis_RKN_accY / windowSize;
+        kurtosis[2] = kurtosis_RKN_accZ / windowSize;
+        kurtosis[3] = kurtosis_HIP_accX / windowSize;
+        kurtosis[4] = kurtosis_HIP_accY / windowSize;
+        kurtosis[5] = kurtosis_HIP_accZ / windowSize;
+        kurtosis[6] = kurtosis_LUA_accX / windowSize;
+        kurtosis[7] = kurtosis_LUA_accY / windowSize;
+        kurtosis[8] = kurtosis_LUA_accZ / windowSize;
+
+        return kurtosis;
+    }
+
+    // 计算偏度-9
+    public double[] skewness(List<DataEntity> list, double[] meanValue, double[] variance) {
+        double skewness_RKN_accX = 0;
+        double skewness_RKN_accY = 0;
+        double skewness_RKN_accZ = 0;
+        double skewness_HIP_accX = 0;
+        double skewness_HIP_accY = 0;
+        double skewness_HIP_accZ = 0;
+        double skewness_LUA_accX = 0;
+        double skewness_LUA_accY = 0;
+        double skewness_LUA_accZ = 0;
+        double[] skewness = new double[9];
+        for (int i = 0; i < list.size(); i++) {
+            DataEntity dataEntity = list.get(i);
+            double tmp = (Double.parseDouble(dataEntity.getRkn_x()) - meanValue[0]) / Math.sqrt(variance[0]);
+            skewness_RKN_accX = skewness_RKN_accX + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getRkn_y()) - meanValue[1]) / Math.sqrt(variance[1]);
+            skewness_RKN_accY = skewness_RKN_accY + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getRkn_z()) - meanValue[2]) / Math.sqrt(variance[2]);
+            skewness_RKN_accZ = skewness_RKN_accZ + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getHip_x()) - meanValue[3]) / Math.sqrt(variance[3]);
+            skewness_HIP_accX = skewness_HIP_accX + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getHip_y()) - meanValue[4]) / Math.sqrt(variance[4]);
+            skewness_HIP_accY = skewness_HIP_accY + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getHip_z()) - meanValue[5]) / Math.sqrt(variance[5]);
+            skewness_HIP_accZ = skewness_HIP_accZ + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getLua_x()) - meanValue[6]) / Math.sqrt(variance[6]);
+            skewness_LUA_accX = skewness_LUA_accX + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getLua_y()) - meanValue[7]) / Math.sqrt(variance[7]);
+            skewness_LUA_accY = skewness_LUA_accY + Math.pow(tmp, 3);
+            tmp = (Double.parseDouble(dataEntity.getLua_z()) - meanValue[8]) / Math.sqrt(variance[8]);
+            skewness_LUA_accZ = skewness_LUA_accZ + Math.pow(tmp, 3);
+        }
+        skewness[0] = skewness_RKN_accX / windowSize;
+        skewness[1] = skewness_RKN_accY / windowSize;
+        skewness[2] = skewness_RKN_accZ / windowSize;
+        skewness[3] = skewness_HIP_accX / windowSize;
+        skewness[4] = skewness_HIP_accY / windowSize;
+        skewness[5] = skewness_HIP_accZ / windowSize;
+        skewness[6] = skewness_LUA_accX / windowSize;
+        skewness[7] = skewness_LUA_accY / windowSize;
+        skewness[8] = skewness_LUA_accZ / windowSize;
+
+        return skewness;
+    }
+
+    // 计算协方差-9
+    public double[] covariance(List<DataEntity> list, double[] meanValue) {
+        double covariance_RKN_accX_accY = 0;
+        double covariance_RKN_accY_accZ = 0;
+        double covariance_RKN_accZ_accX = 0;
+        double covariance_HIP_accX_accY = 0;
+        double covariance_HIP_accY_accZ = 0;
+        double covariance_HIP_accZ_accX = 0;
+        double covariance_LUA_accX_accY = 0;
+        double covariance_LUA_accY_accZ = 0;
+        double covariance_LUA_accZ_accX = 0;
+        double[] covariance = new double[9];
+        for (int i = 0; i < list.size(); i++) {
+            DataEntity dataEntity = list.get(i);
+            double tmp = (Double.parseDouble(dataEntity.getRkn_x()) - meanValue[0]) *
+                    (Double.parseDouble(dataEntity.getRkn_y()) - meanValue[1]);
+            covariance_RKN_accX_accY = covariance_RKN_accX_accY + tmp;
+            tmp = (Double.parseDouble(dataEntity.getRkn_y()) - meanValue[1]) *
+                    (Double.parseDouble(dataEntity.getRkn_z()) - meanValue[2]);
+            covariance_RKN_accY_accZ = covariance_RKN_accY_accZ + tmp;
+            tmp = (Double.parseDouble(dataEntity.getRkn_z()) - meanValue[2]) *
+                    (Double.parseDouble(dataEntity.getRkn_x()) - meanValue[0]);
+            covariance_RKN_accZ_accX = covariance_RKN_accZ_accX + tmp;
+            tmp = (Double.parseDouble(dataEntity.getHip_x()) - meanValue[3]) *
+                    (Double.parseDouble(dataEntity.getHip_y()) - meanValue[4]);
+            covariance_HIP_accX_accY = covariance_HIP_accX_accY + tmp;
+            tmp = (Double.parseDouble(dataEntity.getHip_y()) - meanValue[4]) *
+                    (Double.parseDouble(dataEntity.getHip_z()) - meanValue[5]);
+            covariance_HIP_accY_accZ = covariance_HIP_accY_accZ + tmp;
+            tmp = (Double.parseDouble(dataEntity.getHip_z()) - meanValue[5]) *
+                    (Double.parseDouble(dataEntity.getHip_x()) - meanValue[3]);
+            covariance_HIP_accZ_accX = covariance_HIP_accZ_accX + tmp;
+            tmp = (Double.parseDouble(dataEntity.getLua_x()) - meanValue[6]) *
+                    (Double.parseDouble(dataEntity.getLua_y()) - meanValue[7]);
+            covariance_LUA_accX_accY = covariance_LUA_accX_accY + tmp;
+            tmp = (Double.parseDouble(dataEntity.getLua_y()) - meanValue[7]) *
+                    (Double.parseDouble(dataEntity.getLua_z()) - meanValue[8]);
+            covariance_LUA_accY_accZ = covariance_LUA_accY_accZ + tmp;
+            tmp = (Double.parseDouble(dataEntity.getLua_z()) - meanValue[8]) *
+                    (Double.parseDouble(dataEntity.getLua_x()) - meanValue[6]);
+            covariance_LUA_accZ_accX = covariance_LUA_accZ_accX + Math.pow(tmp, 3);
+        }
+        covariance[0] = covariance_RKN_accX_accY / windowSize;
+        covariance[1] = covariance_RKN_accY_accZ / windowSize;
+        covariance[2] = covariance_RKN_accZ_accX / windowSize;
+        covariance[3] = covariance_HIP_accX_accY / windowSize;
+        covariance[4] = covariance_HIP_accY_accZ / windowSize;
+        covariance[5] = covariance_HIP_accZ_accX / windowSize;
+        covariance[6] = covariance_LUA_accX_accY / windowSize;
+        covariance[7] = covariance_LUA_accY_accZ / windowSize;
+        covariance[8] = covariance_LUA_accZ_accX / windowSize;
+
+        return covariance;
+    }
+
+
+    // 计算相关系数
+    public double[] correlation(double[] covariance, double[] variance) {
+        double[] correlation = new double[9];
+        correlation[0] = covariance[0] / Math.sqrt(variance[0] * variance[1]);
+        correlation[1] = covariance[1] / Math.sqrt(variance[1] * variance[2]);
+        correlation[2] = covariance[2] / Math.sqrt(variance[2] * variance[0]);
+        correlation[3] = covariance[3] / Math.sqrt(variance[3] * variance[4]);
+        correlation[4] = covariance[4] / Math.sqrt(variance[4] * variance[5]);
+        correlation[5] = covariance[5] / Math.sqrt(variance[5] * variance[3]);
+        correlation[6] = covariance[6] / Math.sqrt(variance[6] * variance[7]);
+        correlation[7] = covariance[7] / Math.sqrt(variance[7] * variance[8]);
+        correlation[8] = covariance[8] / Math.sqrt(variance[8] * variance[6]);
+
+        return correlation;
+    }
+
 
     // 计算能量
     public double[] energy(List<DataEntity> list) {
@@ -389,5 +768,4 @@ public class FeatureExtraction {
             }
         }
     }
-
 }
