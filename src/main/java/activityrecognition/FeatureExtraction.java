@@ -85,7 +85,7 @@ public class FeatureExtraction {
             // 计算能量-9
             double[] energyValue = energy(list);
 
-            sqlAdd[index++] = "INSERT INTO `featureextraction32` (" +
+            sqlAdd[index++] = "INSERT INTO `featureextraction_" + tableName + "128_99` (" +
                     "`RKN_accX_mean`, `RKN_accY_mean`, `RKN_accZ_mean`," +
                     " `HIP_accX_mean`, `HIP_accY_mean`, `HIP_accZ_mean`, " +
                     "`LUA_accX_mean`, `LUA_accY_mean`, `LUA_accZ_mean`, " +
@@ -592,7 +592,7 @@ public class FeatureExtraction {
             covariance_LUA_accY_accZ = covariance_LUA_accY_accZ + tmp;
             tmp = (Double.parseDouble(dataEntity.getLua_z()) - meanValue[8]) *
                     (Double.parseDouble(dataEntity.getLua_x()) - meanValue[6]);
-            covariance_LUA_accZ_accX = covariance_LUA_accZ_accX + Math.pow(tmp, 3);
+            covariance_LUA_accZ_accX = covariance_LUA_accZ_accX + tmp;
         }
         covariance[0] = covariance_RKN_accX_accY / windowSize;
         covariance[1] = covariance_RKN_accY_accZ / windowSize;

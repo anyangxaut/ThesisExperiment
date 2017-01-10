@@ -13,10 +13,14 @@ public class ActivityRecognition {
 //        // 将不同的动作类型数据存储在不同的表中
 //        SplitLocomotion splitLocomotion = new SplitLocomotion();
 //        splitLocomotion.startSplit();
+//        SplitLocomotion33 splitLocomotion33 = new SplitLocomotion33();
+//        splitLocomotion33.startSplit();
 
         // 窗口划分，特征提取
-		FeatureExtraction featureExtraction = new FeatureExtraction(32, 0.5);
-        featureExtraction.startFeatureExtraction();
+//		FeatureExtraction featureExtraction = new FeatureExtraction(128, 0.5);
+//        featureExtraction.startFeatureExtraction();
+//        FeatureExtraction33 featureExtraction33 = new FeatureExtraction33(128, 0.5);
+//        featureExtraction33.startFeatureExtraction();
 
         // 特征优选
 
