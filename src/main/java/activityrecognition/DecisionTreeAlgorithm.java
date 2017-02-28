@@ -24,6 +24,12 @@ public class DecisionTreeAlgorithm {
 	private List<InstanceWithAttributesMap> trainingSet = new ArrayList<InstanceWithAttributesMap>();
 	// 训练好的决策树模型
 	private RandomForest randomForest = null;
+
+	int walk_num = 502;
+	int stand_num = 973;
+	int lie_num = 34;
+	int sit_num = 305;
+	double accuracy_final = 0.0;
 	
 	// C4.5决策树算法:利用训练数据训练C4.5决策树识别模型
 	public void trainDecisionTree(int[] selectedColumn) {
@@ -31,9 +37,9 @@ public class DecisionTreeAlgorithm {
 		// 查询相关数据
 		List<List<Double>> trainList = null;
 
-		String sqlFindTrain1 = "select * from featureextraction_stand32_33 where Id < 401;";
+		String sqlFindTrain1 = "select * from featureextraction_stand32_33 where Id < 7001;";
 		trainList = dao.search(sqlFindTrain1, selectedColumn);
-		String sqlFindTrain2 = "select * from featureextraction_walk32_33 where Id < 401;";
+		String sqlFindTrain2 = "select * from featureextraction_sit32_33 where Id < 2001;";
 		trainList.addAll(dao.search(sqlFindTrain2, selectedColumn));
 
 		// 循环读取训练数据
@@ -63,7 +69,7 @@ public class DecisionTreeAlgorithm {
 		HashMap<String,Double> pair=new HashMap<String, Double>();
 	
 		pair.put("1", randomForest.getProbability(map, 1));
-		pair.put("2", randomForest.getProbability(map, 2));
+		pair.put("4", randomForest.getProbability(map, 4));
 //		pair.put("4", randomForest.getProbability(map, 4));
 //		pair.put("5", randomForest.getProbability(map, 5));
 
@@ -86,10 +92,10 @@ public class DecisionTreeAlgorithm {
 		trainDecisionTree(selectedColumn);
 
  		// 十折交叉验证7003
-// 		for(int i = 0; i < 10; i++){
-			String sqlFindTest1 = "select * from featureextraction_stand32_33 where Id between 401 and 500;";
+ 		for(int i = 0; i < 1; i++){
+			String sqlFindTest1 = "select * from featureextraction_stand32_33 where Id > 7000;";
 			testList = dao.search(sqlFindTest1, selectedColumn);
-			String sqlFindTest2 = "select * from featureextraction_walk32_33 where Id between 401 and 500;";
+			String sqlFindTest2 = "select * from featureextraction_sit32_33 where Id > 2000;";
 			testList.addAll(dao.search(sqlFindTest2, selectedColumn));
 
  			// 正确分类的数据量
@@ -108,8 +114,8 @@ public class DecisionTreeAlgorithm {
  					 correctClassify++;
  				 }
  			}
- 			System.out.println("第1轮交叉验证测试数据量为" + testList.size() + "，正确分类数据量为" + correctClassify
+ 			System.out.println("测试数据量为" + testList.size() + "，正确分类数据量为" + correctClassify
  					+ "，识别率为" + ((double)correctClassify / testList.size()));
-// 		}
+ 		}
 	}
 }

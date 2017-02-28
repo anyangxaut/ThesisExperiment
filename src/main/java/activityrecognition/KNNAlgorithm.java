@@ -119,9 +119,10 @@ public class KNNAlgorithm {
 		List<List<Double>> trainList = null;
 		// 存储测试集数据
 		List<List<Double>> testList = null;
-		
-		// 十折交叉验证7003,14010,28025
-//		for(int i = 0; i < 10; i++){
+
+
+		// 十折交叉验证
+		for(int i = 0; i < 1; i++){
 //			// 查询测试数据信息的sql语句
 //			String sqlFindTest = "select * from featureextraction where Id between " + (i*2802+1) + " and " + ((i+1)*2802) + ";";
 //			// 执行查询操作
@@ -136,14 +137,14 @@ public class KNNAlgorithm {
 //			// 执行查询操作
 //			trainList.addAll(dao.search(sqlFindTrain2));
 
-		    String sqlFindTest1 = "select * from featureextraction_stand32_33 where Id between 401 and 500;";
+		    String sqlFindTest1 = "select * from featureextraction_stand32_33 where Id > 7000;";
 		    testList = dao.search(sqlFindTest1, selectedColumn);
-		    String sqlFindTest2 = "select * from featureextraction_walk32_33 where Id between 401 and 500;";
+		    String sqlFindTest2 = "select * from featureextraction_sit32_33 where Id > 2000;";
 		    testList.addAll(dao.search(sqlFindTest2, selectedColumn));
 
-		    String sqlFindTrain1 = "select * from featureextraction_stand32_33 where Id < 401;";
+		    String sqlFindTrain1 = "select * from featureextraction_stand32_33 where Id < 7001;";
 		    trainList = dao.search(sqlFindTrain1, selectedColumn);
-		    String sqlFindTrain2 = "select * from featureextraction_walk32_33 where Id < 401;";
+		    String sqlFindTrain2 = "select * from featureextraction_sit32_33 where Id < 2001;";
 		    trainList.addAll(dao.search(sqlFindTrain2, selectedColumn));
 
 			// 正确分类的数据量
@@ -161,9 +162,9 @@ public class KNNAlgorithm {
 					 correctClassify++;
 				 }
 			}
-			System.out.println("第1轮交叉验证测试数据量为" + testList.size() + "，正确分类数据量为" + correctClassify
-					+ "，识别率为" + ((double)correctClassify / testList.size()));  
-//		}
+			System.out.println("测试数据量为" + testList.size() + "，正确分类数据量为" + correctClassify
+					+ "，识别率为" + ((double)correctClassify / testList.size()));
+		}
 	}
 }
 

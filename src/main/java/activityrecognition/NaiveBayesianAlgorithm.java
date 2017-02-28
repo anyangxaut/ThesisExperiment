@@ -26,6 +26,12 @@ public class NaiveBayesianAlgorithm {
 	// 创建ClassificationAlgorithmsDao类
 	ClassificationAlgorithmsDao dao = new ClassificationAlgorithmsImpl();
 
+	int walk_num = 502;
+	int stand_num = 973;
+	int lie_num = 34;
+	int sit_num = 305;
+	double accuracy_final = 0.0;
+
 	// NBC算法:利用训练数据训练NBC识别模型
 	public void trainNBC(int[] selectedColumn) {
 //		// 对于locomotion = 1
@@ -65,7 +71,7 @@ public class NaiveBayesianAlgorithm {
 //		varianceLie = getVariance(listLie, meanLie);
 
 		// 查询相关数据
-		String sqlStand = "select * from featureextraction_stand32_33 where Id < 401;";
+		String sqlStand = "select * from featureextraction_stand32_33 where Id < 7001;";
 		List<List<Double>> listStand = dao.search(sqlStand, selectedColumn);
 		// 计算均值
 		meanStand = getMean(listStand, selectedColumn);
@@ -73,7 +79,7 @@ public class NaiveBayesianAlgorithm {
 		varianceStand = getVariance(listStand, meanStand, selectedColumn);
 
 		// 查询相关数据
-		String sqlWalk = "select * from featureextraction_walk32_33 where Id < 401;";
+		String sqlWalk = "select * from featureextraction_sit32_33 where Id < 2001;";
 		List<List<Double>> listWalk = dao.search(sqlWalk, selectedColumn);
 		// 计算均值
 		meanWalk = getMean(listWalk, selectedColumn);
@@ -112,7 +118,7 @@ public class NaiveBayesianAlgorithm {
 //		}
 		
 //		return Max(resultStand, resultWalk, resultSit, resultLie);
-		return resultStand > resultWalk ? 1 : 2;
+		return resultStand > resultWalk ? 1 : 4;
 	}
 	
 	// 计算均值
@@ -187,15 +193,14 @@ public class NaiveBayesianAlgorithm {
  		List<List<Double>> testList = null;
 
  		// 十折交叉验证7003
-// 		for(int i = 0; i < 10; i++){
+ 		for(int i = 0; i < 1; i++){
  			// 训练NBC模型
 			trainNBC(selectedColumn);
 
-			String sqlFindTest1 = "select * from featureextraction_stand32_33 where Id between 401 and 500;";
+			String sqlFindTest1 = "select * from featureextraction_stand32_33 where Id > 7000;";
 			testList = dao.search(sqlFindTest1, selectedColumn);
-			String sqlFindTest2 = "select * from featureextraction_walk32_33 where Id between 401 and 500;";
+			String sqlFindTest2 = "select * from featureextraction_sit32_33 where Id > 2000;";
 			testList.addAll(dao.search(sqlFindTest2, selectedColumn));
-
  			// 正确分类的数据量
  			int correctClassify = 0;
 
@@ -212,8 +217,8 @@ public class NaiveBayesianAlgorithm {
  					 correctClassify++;
  				 }
  			}
- 			System.out.println("第1轮交叉验证测试数据量为" + testList.size() + "，正确分类数据量为" + correctClassify
+ 			System.out.println("测试数据量为" + testList.size() + "，正确分类数据量为" + correctClassify
  					+ "，识别率为" + ((double)correctClassify / testList.size()));
-// 		}
+ 		}
  	}
 }
